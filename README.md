@@ -64,11 +64,17 @@
   - Run `icon_changer.exe` as Administrator (right-click → Run as administrator).
   - Ensure you’re using Windows (the app is designed for Windows only).
 
-## Contact
+## Donate & Support
 
-- **Developer**: Bibhuti
-- **Facebook**: https://www.facebook.com/bibhutithecoolboy
-- **Donations**: Use the "Donate Now" button in the app to support development or contact me for custom tools.
+If you find this app helpful, please consider supporting the developer:
+
+- Visit Facebook: [facebook.com/bibhutithecoolboy](https://facebook.com/bibhutithecoolboy)
+- Donations help us improve and build more tools for photography professionals.  
+  Please scan the QR code below to donate any amount.
+
+<p align="center"> <img src="payment_qr_code.png" alt="Donate QR Code" /> </p>
+
+Thank you for your support!
 
 ## Notes
 
