@@ -22,7 +22,7 @@ class FolderIconChanger:
         self.root.configure(bg="#f0f2f5")
         self.root.resizable(True, True)
         
-        # Set window icon (replace with actual path to your icon)
+        # Set window icon
         try:
             self.root.iconbitmap("app_icon.ico")
         except:
@@ -111,12 +111,23 @@ class FolderIconChanger:
         self.icon_drop.drop_target_register(DND_FILES)
         self.icon_drop.dnd_bind('<<Drop>>', self.drop_icon)
         
+        # Buttons frame for Change Icon and Clear Icon
+        self.buttons_frame = tk.Frame(self.main_frame, bg="#f0f2f5")
+        self.buttons_frame.grid(row=7, column=0, columnspan=3, pady=10)
+        
         # Change Icon button
         ttk.Button(
-            self.main_frame,
+            self.buttons_frame,
             text="Change Icon",
             command=self.submit
-        ).grid(row=7, column=0, columnspan=3, pady=10)
+        ).pack(side="left", padx=5)
+        
+        # Clear Icon button
+        ttk.Button(
+            self.buttons_frame,
+            text="Clear Icon",
+            command=self.clear_icon
+        ).pack(side="left", padx=5)
         
         # Result label
         self.result_label = tk.Label(
@@ -173,7 +184,7 @@ class FolderIconChanger:
         self.main_frame.columnconfigure(1, weight=1)
         self.main_frame.columnconfigure(2, weight=0)
         
-        # Center the main window on the screen
+        # Center the main window
         self.root.update_idletasks()
         width = self.root.winfo_width()
         height = self.root.winfo_height()
@@ -207,12 +218,26 @@ class FolderIconChanger:
             return
         
         try:
-            # Copy and rename icon to Icon.ico
+            # Paths for desktop.ini and Icon.ico
+            ini_path = os.path.join(folder, 'desktop.ini')
             dest_icon = os.path.join(folder, 'Icon.ico')
+            
+            # Remove existing desktop.ini and Icon.ico if they exist
+            for file_path in [ini_path, dest_icon]:
+                if os.path.exists(file_path):
+                    try:
+                        # Clear system and hidden attributes
+                        subprocess.call(['attrib', '-S', '-H', file_path])
+                        # Delete the file
+                        os.remove(file_path)
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to remove existing file {file_path}: {str(e)}")
+                        return
+            
+            # Copy new icon to folder
             shutil.copy(icon_path, dest_icon)
             
-            # Create desktop.ini
-            ini_path = os.path.join(folder, 'desktop.ini')
+            # Create new desktop.ini
             with open(ini_path, 'w') as f:
                 f.write('[.ShellClassInfo]\nIconResource=Icon.ico,0\n')
             
@@ -220,7 +245,7 @@ class FolderIconChanger:
             subprocess.call(['attrib', '+S', '+H', ini_path])
             subprocess.call(['attrib', '+S', '+H', dest_icon])
             
-            # Set folder to ReadOnly to apply customization
+            # Set folder to ReadOnly
             subprocess.call(['attrib', '+R', folder])
             
             self.result_label.config(text="Success! Refresh the folder (F5) to see the icon.", fg="#008800")
@@ -228,6 +253,39 @@ class FolderIconChanger:
         except Exception as e:
             self.result_label.config(text=f"Error: {str(e)}", fg="#cc0000")
             messagebox.showerror("Error", f"Failed to apply icon: {str(e)}")
+    
+    def clear_icon(self):
+        folder = self.entry_folder.get().strip()
+        
+        if not folder or not os.path.isdir(folder):
+            messagebox.showerror("Error", "Please select a valid folder!")
+            return
+        
+        try:
+            # Paths for desktop.ini and Icon.ico
+            ini_path = os.path.join(folder, 'desktop.ini')
+            dest_icon = os.path.join(folder, 'Icon.ico')
+            
+            # Remove existing desktop.ini and Icon.ico if they exist
+            for file_path in [ini_path, dest_icon]:
+                if os.path.exists(file_path):
+                    try:
+                        # Clear system and hidden attributes
+                        subprocess.call(['attrib', '-S', '-H', file_path])
+                        # Delete the file
+                        os.remove(file_path)
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to remove {file_path}: {str(e)}")
+                        return
+            
+            # Clear folder's ReadOnly attribute
+            subprocess.call(['attrib', '-R', folder])
+            
+            self.result_label.config(text="Success! Icon cleared. Refresh the folder (F5).", fg="#008800")
+            messagebox.showinfo("Success", "Icon cleared successfully! Press F5 to refresh the folder.")
+        except Exception as e:
+            self.result_label.config(text=f"Error: {str(e)}", fg="#cc0000")
+            messagebox.showerror("Error", f"Failed to clear icon: {str(e)}")
     
     def drop_folder(self, event):
         data = event.data.strip('{}')
@@ -246,7 +304,7 @@ class FolderIconChanger:
     
     def show_qr_code(self):
         try:
-            # Load QR code image, handling both script and EXE modes
+            # Load QR code image
             if hasattr(sys, '_MEIPASS'):
                 qr_path = os.path.join(sys._MEIPASS, 'payment_qr_code.png')
             else:
@@ -258,7 +316,7 @@ class FolderIconChanger:
             qr_image = Image.open(qr_path)
             qr_photo = ImageTk.PhotoImage(qr_image)
             
-            # Create a separate window for QR code
+            # Create QR code window
             qr_window = Toplevel(self.root)
             qr_window.title("Donate via QR Code")
             qr_window.resizable(False, False)
@@ -266,7 +324,7 @@ class FolderIconChanger:
             
             # QR code label
             qr_label = tk.Label(qr_window, image=qr_photo, bg="#f0f2f5")
-            qr_label.image = qr_photo  # Keep a reference
+            qr_label.image = qr_photo
             qr_label.pack(pady=10)
             
             # Close button
@@ -276,13 +334,10 @@ class FolderIconChanger:
                 command=qr_window.destroy
             ).pack(pady=10)
             
-            # Set window size based on original image size
+            # Center QR window
             qr_window.update_idletasks()
             width = qr_image.width + 20
             height = qr_image.height + 80
-            qr_window.geometry(f"{width}x{height}")
-            
-            # Center the QR window on the screen
             screen_width = qr_window.winfo_screenwidth()
             screen_height = qr_window.winfo_screenheight()
             x = (screen_width // 2) - (width // 2)
